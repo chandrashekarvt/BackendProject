@@ -1,7 +1,4 @@
-# BackendProject
-
-- An API to fetch latest videos sorted in reverse chronological order of their publishing date-time from youtube for a given tag/search query in a paginated response. <br />
-
+# Backend Project
 
 Technologies used: Flask, Sqlite3 <br />
 
