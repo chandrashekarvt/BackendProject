@@ -30,7 +30,7 @@ items = []
 search_query = "football"
 
 
-API_KEY = 'AIzaSyC5vBaZLlBWsVyZlNGFGqh0NbhKFzq_O58'
+API_KEY = ''
 
 
 def get_items():
