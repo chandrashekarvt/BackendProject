@@ -13,5 +13,5 @@ Step 2: Run the server using the following steps :<br />
   - Then run ```flask run```<br />
   <br />
   
-Step 3: Visit ```http://127.0.0.1:5000/1``` in your local browser to view the first page of the response<br />
+Step 3: Visit ```http://127.0.0.1:5000/1``` in your local browser to view the first page of the response (reload if needed) <br />
 <br />
