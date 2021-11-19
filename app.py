@@ -1,38 +1,29 @@
-from flask import Flask, jsonify, json
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify
 from datetime import datetime
 from sqlalchemy import or_
 import threading
 import time
 import requests
 
+# Initializing the app
 app = Flask(__name__)
+# Setting a relative path for the database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///search_results.db'
 
-# initialize the database
-db = SQLAlchemy(app)
+from Models import db, SearchResult
 
-
-# create db model
-class SearchResult(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.String(1000), nullable=True)
-    date_created = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
-    thumbnail = db.Column(db.String(1000), nullable=False)
-
-    def __repr__(self):
-        return '<Item %r>' % self.id
-
-
-db.create_all()
+db.create_all()  # Creating the Database and tables
 items = []
 
+# Enter your search query
 search_query = "football"
+# Put your GOOGLE API KEY Here!
 API_KEY = ''
+# Limits to 20 data objects at a time, but you are free to change it
 data_limit = 20
 
 
+# Gets all the objects from the Youtube API and stores it in a list
 def get_items():
     items.clear()
     base_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults={data_limit}&q={search_query}&type=video&key={API_KEY}"
@@ -48,29 +39,30 @@ def get_items():
             {'title': title, 'description': description, 'date_and_time': date_and_time, 'thumbnail': thumbnail})
 
 
+# Adds all the objects from the list to the sqlite database
 def add_items_to_database():
+    # Removing existing data if present
     try:
         db.session.query(SearchResult).delete()
         db.session.commit()
     except:
         db.session.rollback()
+
+    # Inserting data into the database from items list
     for k in items:
         s = k['date_and_time']
         dt = datetime.fromisoformat(s[:-1])
-        result = SearchResult(title=k['title'], description=k['description'], date_created=dt,thumbnail=k['thumbnail'])
+        result = SearchResult(title=k['title'], description=k['description'], date_created=dt, thumbnail=k['thumbnail'])
         try:
             db.session.add(result)
             db.session.commit()
-            print(f"Add item titled {k['title']} to database")
         except Exception as e:
             print(e)
-        print(len(items))
 
-
+# Function to continously update data in the database every 10 seconds. Starts execution before the first request
 @app.before_first_request
 def activate_job():
     def run_job():
-        print("Hello")
         while True:
             get_items()
             add_items_to_database()
@@ -79,6 +71,7 @@ def activate_job():
     thread.start()
 
 
+# Displays all the results
 @app.route('/')
 def getAllResults():
     all_result = []
@@ -89,11 +82,12 @@ def getAllResults():
     return jsonify(all_result)
 
 
+# Search functionality to filter results with respect to title and description
 @app.route('/search/<string:query>')
 def searchResult(query):
     filtered_result = SearchResult.query.filter(
         or_(SearchResult.title.like('%' + query + '%'),
-        SearchResult.description.like('%' + query + '%'))
+            SearchResult.description.like('%' + query + '%'))
     )
     all_result = []
     for u in filtered_result:
