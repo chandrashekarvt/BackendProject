@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, json
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from sqlalchemy import or_
 import threading
 import time
-from dateutil import parser
 import requests
 
 app = Flask(__name__)
@@ -27,15 +27,15 @@ class SearchResult(db.Model):
 
 db.create_all()
 items = []
+
 search_query = "football"
-
-
 API_KEY = ''
+data_limit = 20
 
 
 def get_items():
     items.clear()
-    base_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q={search_query}&type=video&key={API_KEY}"
+    base_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults={data_limit}&q={search_query}&type=video&key={API_KEY}"
     queries = requests.get(base_url)
     resp = queries.json()["items"]
     for i in resp:
@@ -71,18 +71,32 @@ def add_items_to_database():
 def activate_job():
     def run_job():
         print("Hello")
-        # while True:
-        # get_items()
-        # add_items_to_database()
-        #     time.sleep(10)
+        while True:
+            get_items()
+            add_items_to_database()
+            time.sleep(10)
     thread = threading.Thread(target=run_job)
     thread.start()
 
 
 @app.route('/')
-def hello_world():
+def getAllResults():
     all_result = []
     for u in db.session.query(SearchResult).order_by(SearchResult.date_created.desc()).all():
+        k = u.__dict__;
+        k.pop('_sa_instance_state')
+        all_result.append(k);
+    return jsonify(all_result)
+
+
+@app.route('/search/<string:query>')
+def searchResult(query):
+    filtered_result = SearchResult.query.filter(
+        or_(SearchResult.title.like('%' + query + '%'),
+        SearchResult.description.like('%' + query + '%'))
+    )
+    all_result = []
+    for u in filtered_result:
         k = u.__dict__;
         k.pop('_sa_instance_state')
         all_result.append(k);
