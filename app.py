@@ -30,7 +30,7 @@ items = []
 search_query = "football"
 
 
-API_KEY = ''
+API_KEY = 'AIzaSyC5vBaZLlBWsVyZlNGFGqh0NbhKFzq_O58'
 
 
 def get_items():
@@ -82,7 +82,7 @@ def activate_job():
 @app.route('/')
 def hello_world():
     all_result = []
-    for u in db.session.query(SearchResult).all():
+    for u in db.session.query(SearchResult).order_by(SearchResult.date_created.desc()).all():
         k = u.__dict__;
         k.pop('_sa_instance_state')
         all_result.append(k);
