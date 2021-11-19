@@ -15,5 +15,5 @@ Step 2: Run the server using the following steps :<br />
   
 Step 3: Visit ```http://127.0.0.1:5000/1``` in your local browser to view the first page of the response (reload if needed) <br />
 
-Note: To search for results based on tag/query visit ```hhtp://127.0.0.1:5000/search/<your query>```
+Note: To search for results based on tag/query visit ```http://127.0.0.1:5000/search/<your query>```
 <br />
