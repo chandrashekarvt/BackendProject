@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 from datetime import datetime
 from sqlalchemy import or_
 import threading
@@ -20,7 +20,7 @@ search_query = "football"
 # Put your GOOGLE API KEY Here!
 API_KEY = ''
 # Limits to 20 data objects at a time, but you are free to change it
-data_limit = 20
+data_limit = 30
 
 
 # Gets all the objects from the Youtube API and stores it in a list
@@ -59,6 +59,7 @@ def add_items_to_database():
         except Exception as e:
             print(e)
 
+
 # Function to continously update data in the database every 10 seconds. Starts execution before the first request
 @app.before_first_request
 def activate_job():
@@ -67,15 +68,18 @@ def activate_job():
             get_items()
             add_items_to_database()
             time.sleep(10)
+
     thread = threading.Thread(target=run_job)
     thread.start()
 
 
-# Displays all the results
-@app.route('/')
-def getAllResults():
+# Displays all the results with pagination
+@app.route('/<int:pageNum>')
+def getAllResults(pageNum):
     all_result = []
-    for u in db.session.query(SearchResult).order_by(SearchResult.date_created.desc()).all():
+    q1 = db.session.query(SearchResult).order_by(SearchResult.date_created.desc());
+    q2 = q1.paginate(per_page=10,page=pageNum,error_out=True).items
+    for u in q2:
         k = u.__dict__;
         k.pop('_sa_instance_state')
         all_result.append(k);
